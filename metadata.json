@@ -1,0 +1,6 @@
+{
+  "name": "Fábrica de Bocadillos La Esperanza",
+  "description": "Sistema de Gestión de Ventas, Inventario de Guayaba y Despachos Agroindustriales en Vélez Santander con estética Warm Retro Vintage",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

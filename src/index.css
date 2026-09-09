@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+/* Custom typography assignments */
+.font-serif,
+.font-display,
+.font-headline {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.font-sans,
+.font-body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.font-mono,
+.font-label {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Custom retro styling utilities */
+.vintage-double-border {
+  border: 3px double #bc6c25;
+}
+
+.vintage-double-border-olive {
+  border: 3px double #283618;
+}
+
+.retro-shadow-sm {
+  box-shadow: 2px 2px 0px #283618;
+}
+
+.retro-shadow {
+  box-shadow: 3px 3px 0px #283618;
+}
+
+.retro-shadow-primary {
+  box-shadow: 3px 3px 0px #8f4a00;
+}
+
+.retro-shadow-olive {
+  box-shadow: 3px 3px 0px #121f05;
+}
+
+.retro-shadow-lg {
+  box-shadow: 5px 5px 0px #121f05;
+}
+
+.retro-press:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px transparent !important;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f2efd5;
+}
+::-webkit-scrollbar-thumb {
+  background: #bc6c25;
+  border-radius: 3px;
+}
