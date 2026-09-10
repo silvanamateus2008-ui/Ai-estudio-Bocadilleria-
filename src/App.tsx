@@ -40,7 +40,9 @@ export default function App() {
       <NavigationHeader
         currentScreen={currentScreen}
         onSelectScreen={setCurrentScreen}
+        onNavigate={setCurrentScreen}
         onOpenPromptModal={handleOpenPromptModal}
+        onOpenPromptsModal={handleOpenPromptModal}
       />
 
       {/* Screen Render Container */}
@@ -49,6 +51,7 @@ export default function App() {
         {currentScreen !== 'SCR-01' && (
           <Sidebar
             currentScreen={currentScreen}
+            onNavigate={setCurrentScreen}
             onSelectScreen={setCurrentScreen}
             onOpenPromptModal={handleOpenPromptModal}
           />
@@ -128,6 +131,8 @@ export default function App() {
         isOpen={isPromptModalOpen}
         onClose={() => setIsPromptModalOpen(false)}
         initialScreenCode={selectedPromptCode}
+        onNavigateToScreen={setCurrentScreen}
+        onNavigate={setCurrentScreen}
       />
     </div>
   );

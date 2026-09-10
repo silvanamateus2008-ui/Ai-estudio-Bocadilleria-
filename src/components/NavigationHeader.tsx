@@ -4,8 +4,10 @@ import { FileText, Layers, ShieldCheck, Compass, Sparkles } from 'lucide-react';
 
 interface NavigationHeaderProps {
   currentScreen: ScreenId;
-  onSelectScreen: (screen: ScreenId) => void;
-  onOpenPromptsModal: () => void;
+  onSelectScreen?: (screen: ScreenId) => void;
+  onNavigate?: (screen: ScreenId) => void;
+  onOpenPromptsModal?: () => void;
+  onOpenPromptModal?: () => void;
 }
 
 const SCREENS: { id: ScreenId; code: string; label: string; fileRef: string }[] = [
@@ -21,8 +23,25 @@ const SCREENS: { id: ScreenId; code: string; label: string; fileRef: string }[] 
 export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
   currentScreen,
   onSelectScreen,
+  onNavigate,
   onOpenPromptsModal,
+  onOpenPromptModal,
 }) => {
+  const handleSelect = (screen: ScreenId) => {
+    if (typeof onSelectScreen === 'function') {
+      onSelectScreen(screen);
+    } else if (typeof onNavigate === 'function') {
+      onNavigate(screen);
+    }
+  };
+
+  const handleOpenPrompts = () => {
+    if (typeof onOpenPromptsModal === 'function') {
+      onOpenPromptsModal();
+    } else if (typeof onOpenPromptModal === 'function') {
+      onOpenPromptModal();
+    }
+  };
   return (
     <header className="bg-[#283618] text-[#fefae0] border-b-[3px] border-[#bc6c25] sticky top-0 z-40 shadow-md">
       {/* Top Banner with Identity */}
@@ -40,7 +59,7 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
 
         <div className="flex items-center gap-2">
           <button
-            onClick={onOpenPromptsModal}
+            onClick={handleOpenPrompts}
             className="flex items-center gap-1.5 bg-[#bc6c25] hover:bg-[#8f4a00] text-[#fefae0] px-3 py-1 rounded text-xs font-semibold tracking-wide retro-shadow-sm retro-press border border-[#dda15e] transition-colors"
             title="Abrir Suite Completa de 7 Prompts para Google Stitch"
           >
@@ -67,7 +86,7 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
               return (
                 <button
                   key={s.id}
-                  onClick={() => onSelectScreen(s.id)}
+                  onClick={() => handleSelect(s.id)}
                   className={`px-2.5 py-1 rounded font-sans text-xs font-medium transition-all flex items-center gap-1.5 ${
                     isActive
                       ? 'bg-[#bc6c25] text-[#fefae0] font-bold retro-shadow-sm border border-[#dda15e]'

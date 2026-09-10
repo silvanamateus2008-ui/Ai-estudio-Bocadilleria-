@@ -14,7 +14,9 @@ import {
 interface StitchPromptsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onNavigateToScreen: (screen: ScreenId) => void;
+  onNavigateToScreen?: (screen: ScreenId) => void;
+  onNavigate?: (screen: ScreenId) => void;
+  initialScreenCode?: ScreenId;
 }
 
 const PROMPT_TABS = [
@@ -32,9 +34,25 @@ export const StitchPromptsModal: React.FC<StitchPromptsModalProps> = ({
   isOpen,
   onClose,
   onNavigateToScreen,
+  onNavigate,
+  initialScreenCode,
 }) => {
-  const [activeTab, setActiveTab] = useState('ALL');
+  const [activeTab, setActiveTab] = useState<string>(initialScreenCode || 'ALL');
   const [copied, setCopied] = useState(false);
+
+  React.useEffect(() => {
+    if (initialScreenCode) {
+      setActiveTab(initialScreenCode);
+    }
+  }, [initialScreenCode, isOpen]);
+
+  const navigateTo = (screen: ScreenId) => {
+    if (typeof onNavigateToScreen === 'function') {
+      onNavigateToScreen(screen);
+    } else if (typeof onNavigate === 'function') {
+      onNavigate(screen);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -494,7 +512,7 @@ design_system:
               {activeTab !== 'ALL' && (
                 <button
                   onClick={() => {
-                    onNavigateToScreen(activeTab as ScreenId);
+                    navigateTo(activeTab as ScreenId);
                     onClose();
                   }}
                   className="text-xs font-sans bg-[#283618] text-[#dda15e] px-2.5 py-1 rounded hover:bg-[#1b2413] transition-colors flex items-center gap-1"

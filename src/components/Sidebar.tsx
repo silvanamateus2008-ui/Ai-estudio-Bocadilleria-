@@ -15,10 +15,24 @@ import {
 
 interface SidebarProps {
   currentScreen: ScreenId;
-  onNavigate: (screen: ScreenId) => void;
+  onNavigate?: (screen: ScreenId) => void;
+  onSelectScreen?: (screen: ScreenId) => void;
+  onOpenPromptModal?: (screenCode?: ScreenId) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentScreen, onNavigate }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ 
+  currentScreen, 
+  onNavigate, 
+  onSelectScreen,
+  onOpenPromptModal 
+}) => {
+  const navigate = (screen: ScreenId) => {
+    if (typeof onNavigate === 'function') {
+      onNavigate(screen);
+    } else if (typeof onSelectScreen === 'function') {
+      onSelectScreen(screen);
+    }
+  };
   const menuItems: { id: ScreenId; label: string; icon: React.ReactNode; badge?: string }[] = [
     {
       id: 'SCR-02',
@@ -105,7 +119,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentScreen, onNavigate }) =
               return (
                 <button
                   key={item.id}
-                  onClick={() => onNavigate(item.id)}
+                  onClick={() => navigate(item.id)}
                   className={`w-full text-left flex items-center justify-between px-3 py-2 rounded text-xs transition-all font-sans ${
                     isActive
                       ? 'bg-[#bc6c25] text-[#fefae0] font-bold retro-shadow-sm border border-[#283618]'
@@ -168,7 +182,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentScreen, onNavigate }) =
           </div>
 
           <button
-            onClick={() => onNavigate('SCR-01')}
+            onClick={() => navigate('SCR-01')}
             title="Cerrar Sesión e ir a Login (SCR-01)"
             className="p-1.5 text-[#8f4a00] hover:text-[#9a031e] hover:bg-[#ffdad6] rounded transition-colors"
           >
