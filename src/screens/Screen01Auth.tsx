@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ScreenId, UIState } from '../types';
+import { UIState } from '../types';
 import { IMAGES } from '../data/domainData';
 import { StateControlBar } from '../components/StateControlBar';
+import { useAuth, DEMO_USERNAME, DEMO_PASSWORD } from '../auth/AuthContext';
 import { 
   Lock, 
   User, 
@@ -9,40 +10,49 @@ import {
   Eye, 
   EyeOff, 
   ShieldCheck, 
-  CheckCircle, 
   AlertOctagon, 
   ArrowRight, 
-  Server,
-  Sparkles,
+  Loader2,
   Flame,
   CheckCircle2
 } from 'lucide-react';
 
 interface Screen01AuthProps {
-  onNavigate: (screen: ScreenId) => void;
+  onLoginSuccess: () => void;
   showToast: (msg: string) => void;
 }
 
-export const Screen01Auth: React.FC<Screen01AuthProps> = ({ onNavigate, showToast }) => {
+export const Screen01Auth: React.FC<Screen01AuthProps> = ({ onLoginSuccess, showToast }) => {
+  const { signIn, isDemo } = useAuth();
   const [uiState, setUiState] = useState<UIState>('normal');
   const [username, setUsername] = useState('admin_laesperanza');
-  const [password, setPassword] = useState('••••••••••••');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberSession, setRememberSession] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (uiState === 'loading') return;
+    if (submitting) return;
 
-    if (uiState === 'error') {
-      showToast('Error de autenticación: Verifique sus credenciales en Payara 7.');
+    setSubmitting(true);
+    setUiState('loading');
+    setAuthError(null);
+
+    const { error } = await signIn(username, password, rememberSession);
+
+    if (error) {
+      setSubmitting(false);
+      setUiState('error');
+      setAuthError(error);
       return;
     }
 
-    showToast('¡Sesión Autorizada! ✓ Bienvenido Don Carlos Ruiz. Abriendo Dashboard...');
-    setTimeout(() => {
-      onNavigate('SCR-02');
-    }, 600);
+    setSubmitting(false);
+    setUiState('normal');
+    showToast('¡Sesión Autorizada! ✓ Bienvenido Don Carlos Ruiz. Cargando Libro Mayor...');
+    onLoginSuccess();
   };
 
   return (
@@ -65,11 +75,11 @@ export const Screen01Auth: React.FC<Screen01AuthProps> = ({ onNavigate, showToas
               <AlertOctagon className="w-5 h-5 shrink-0" />
               <div className="text-xs">
                 <strong className="block font-bold">✕ Acceso Denegado:</strong>
-                Usuario o contraseña incorrectos. Verifique sus credenciales con el administrador de planta o el servidor Payara 7.x.
+                {authError ?? 'Verifique sus credenciales con el administrador de planta o el servidor Payara 7.x.'}
               </div>
             </div>
             <button
-              onClick={() => setUiState('normal')}
+              onClick={() => { setUiState('normal'); setAuthError(null); }}
               className="bg-[#9a031e] text-white px-2.5 py-1 rounded text-xs font-bold hover:bg-[#800010] transition-colors"
             >
               Reintentar
@@ -241,10 +251,20 @@ export const Screen01Auth: React.FC<Screen01AuthProps> = ({ onNavigate, showToas
 
                 <button
                   type="submit"
-                  className="w-full bg-[#8f4a00] hover:bg-[#283618] text-[#fefae0] font-bold text-xs py-2.5 rounded retro-shadow retro-press flex items-center justify-center gap-2 border border-[#dda15e] transition-colors"
+                  disabled={submitting}
+                  className="w-full bg-[#8f4a00] hover:bg-[#283618] disabled:opacity-70 disabled:cursor-wait text-[#fefae0] font-bold text-xs py-2.5 rounded retro-shadow retro-press flex items-center justify-center gap-2 border border-[#dda15e] transition-colors"
                 >
-                  <span>Ingresar al Sistema</span>
-                  <ArrowRight className="w-4 h-4 text-[#dda15e]" />
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 text-[#dda15e] animate-spin" />
+                      <span>Verificando Credenciales...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Ingresar al Sistema</span>
+                      <ArrowRight className="w-4 h-4 text-[#dda15e]" />
+                    </>
+                  )}
                 </button>
 
                 <div className="pt-3 border-t border-[#bc6c25]/30 flex items-center justify-between text-[10px] text-[#544438] font-mono">
@@ -254,6 +274,13 @@ export const Screen01Auth: React.FC<Screen01AuthProps> = ({ onNavigate, showToas
                   </span>
                   <span>Cert. Veleño N° 9942</span>
                 </div>
+
+                {isDemo && (
+                  <div className="bg-[#f4f1de] border border-dashed border-[#bc6c25] rounded p-2 text-center text-[10px] font-mono text-[#544438]">
+                    <span className="text-[#8f4a00] font-bold">MODO DEMO:</span>{' '}
+                    usuario <strong>{DEMO_USERNAME}</strong> · clave <strong>{DEMO_PASSWORD}</strong>
+                  </div>
+                )}
               </form>
             )}
           </div>

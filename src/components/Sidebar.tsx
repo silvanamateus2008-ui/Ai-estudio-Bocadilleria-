@@ -18,13 +18,17 @@ interface SidebarProps {
   onNavigate?: (screen: ScreenId) => void;
   onSelectScreen?: (screen: ScreenId) => void;
   onOpenPromptModal?: (screenCode?: ScreenId) => void;
+  onLogout?: () => void;
+  operatorLabel?: string;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
   currentScreen, 
   onNavigate, 
   onSelectScreen,
-  onOpenPromptModal 
+  onOpenPromptModal,
+  onLogout,
+  operatorLabel
 }) => {
   const navigate = (screen: ScreenId) => {
     if (typeof onNavigate === 'function') {
@@ -176,14 +180,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 Don Carlos Ruiz
               </h4>
               <p className="text-[10px] text-[#544438] truncate font-sans">
-                Adm. General de Planta
+                {operatorLabel || 'Adm. General de Planta'}
               </p>
             </div>
           </div>
 
           <button
-            onClick={() => navigate('SCR-01')}
-            title="Cerrar Sesión e ir a Login (SCR-01)"
+            onClick={() => {
+              if (typeof onLogout === 'function') {
+                onLogout();
+              } else {
+                navigate('SCR-01');
+              }
+            }}
+            title="Cerrar Sesión"
             className="p-1.5 text-[#8f4a00] hover:text-[#9a031e] hover:bg-[#ffdad6] rounded transition-colors"
           >
             <LogOut className="w-4 h-4" />

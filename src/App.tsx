@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ScreenId } from './types';
+import { useAuth } from './auth/AuthContext';
 import { NavigationHeader } from './components/NavigationHeader';
 import { Sidebar } from './components/Sidebar';
 import { StitchPromptsModal } from './components/StitchPromptsModal';
@@ -10,9 +11,10 @@ import { Screen04Detail360 } from './screens/Screen04Detail360';
 import { Screen05ModalWizard } from './screens/Screen05ModalWizard';
 import { Screen06Settings } from './screens/Screen06Settings';
 import { Screen07AuditLogs } from './screens/Screen07AuditLogs';
-import { CheckCircle2, FileCode2, Sparkles } from 'lucide-react';
+import { CheckCircle2, FileCode2, Lock } from 'lucide-react';
 
 export default function App() {
+  const { authenticated, loading, signOut, sessionInfo } = useAuth();
   const [currentScreen, setCurrentScreen] = useState<ScreenId>('SCR-02');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isPromptModalOpen, setIsPromptModalOpen] = useState<boolean>(false);
@@ -34,13 +36,70 @@ export default function App() {
     setIsPromptModalOpen(true);
   };
 
+  const handleSelectScreen = (id: ScreenId) => {
+    if (id === 'SCR-01') {
+      void signOut().then(() => showToast('Sesión cerrada. ¡Vuelva pronto, Don Carlos Ruiz!'));
+      return;
+    }
+    setCurrentScreen(id);
+  };
+
+  const handleLogout = () => {
+    void signOut().then(() => showToast('Sesión cerrada. ¡Vuelva pronto, Don Carlos Ruiz!'));
+  };
+
+  const handleLoginSuccess = () => {
+    setCurrentScreen('SCR-02');
+  };
+
+  const loginUserLabel = sessionInfo?.provider === 'demo' ? 'Don Carlos Ruiz' : sessionInfo?.email ?? 'Operador';
+
+  /* Pantalla de carga de restauración de sesión (guía: Loading Skeleton) */
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#fefae0] text-[#1d1c0d] flex flex-col items-center justify-center p-6">
+        <div className="bg-[#f4f1de] border-[3px] border-[#bc6c25] rounded retro-shadow-lg p-8 w-full max-w-sm">
+          <div className="flex items-center justify-center gap-2 mb-4 text-[#8f4a00]">
+            <Lock className="w-5 h-5" />
+            <span className="font-mono text-xs font-bold uppercase tracking-wider">
+              Verificando sesión HTTP en Payara Server 7.x...
+            </span>
+          </div>
+          <div className="space-y-3 animate-pulse">
+            <div className="h-3 bg-[#e7e3ca] rounded w-3/4"></div>
+            <div className="h-3 bg-[#e7e3ca] rounded w-1/2"></div>
+            <div className="h-8 bg-[#dda15e]/50 rounded"></div>
+          </div>
+          <div className="mt-5 h-3 bg-[#e7e3ca] rounded overflow-hidden">
+            <div className="h-full w-1/3 bg-[#bc6c25] animate-pulse rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* Compuerta de autenticación: sin sesión activa SOLO se muestra el login (SCR-01) */
+  if (!authenticated) {
+    return (
+      <>
+        <Screen01Auth onLoginSuccess={handleLoginSuccess} showToast={showToast} />
+        {toastMessage && (
+          <div className="fixed bottom-14 right-4 z-50 bg-[#283618] text-[#fefae0] border-2 border-[#dda15e] px-4 py-2.5 rounded retro-shadow-lg flex items-center gap-2.5 text-xs font-sans animate-fadeIn">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span className="font-medium">{toastMessage}</span>
+          </div>
+        )}
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#fefae0] text-[#1d1c0d] font-sans flex flex-col selection:bg-[#dda15e] selection:text-[#1d1c0d]">
       {/* Top Universal Archival Navigation Header */}
       <NavigationHeader
         currentScreen={currentScreen}
-        onSelectScreen={setCurrentScreen}
-        onNavigate={setCurrentScreen}
+        onSelectScreen={handleSelectScreen}
+        onNavigate={handleSelectScreen}
         onOpenPromptModal={handleOpenPromptModal}
         onOpenPromptsModal={handleOpenPromptModal}
       />
@@ -51,34 +110,36 @@ export default function App() {
         {currentScreen !== 'SCR-01' && (
           <Sidebar
             currentScreen={currentScreen}
-            onNavigate={setCurrentScreen}
-            onSelectScreen={setCurrentScreen}
+            onNavigate={handleSelectScreen}
+            onSelectScreen={handleSelectScreen}
             onOpenPromptModal={handleOpenPromptModal}
+            onLogout={handleLogout}
+            operatorLabel={loginUserLabel}
           />
         )}
 
         {/* Main Content Viewport */}
         <main className="flex-1 overflow-y-auto bg-[#fefae0]">
           {currentScreen === 'SCR-01' && (
-            <Screen01Auth onNavigate={setCurrentScreen} showToast={showToast} />
+            <Screen01Auth onLoginSuccess={handleLoginSuccess} showToast={showToast} />
           )}
           {currentScreen === 'SCR-02' && (
-            <Screen02Dashboard onNavigate={setCurrentScreen} showToast={showToast} />
+            <Screen02Dashboard onNavigate={handleSelectScreen} showToast={showToast} />
           )}
           {currentScreen === 'SCR-03' && (
-            <Screen03Catalog onNavigate={setCurrentScreen} showToast={showToast} />
+            <Screen03Catalog onNavigate={handleSelectScreen} showToast={showToast} />
           )}
           {currentScreen === 'SCR-04' && (
-            <Screen04Detail360 onNavigate={setCurrentScreen} showToast={showToast} />
+            <Screen04Detail360 onNavigate={handleSelectScreen} showToast={showToast} />
           )}
           {currentScreen === 'SCR-05' && (
-            <Screen05ModalWizard onNavigate={setCurrentScreen} showToast={showToast} />
+            <Screen05ModalWizard onNavigate={handleSelectScreen} showToast={showToast} />
           )}
           {currentScreen === 'SCR-06' && (
-            <Screen06Settings onNavigate={setCurrentScreen} showToast={showToast} />
+            <Screen06Settings onNavigate={handleSelectScreen} showToast={showToast} />
           )}
           {currentScreen === 'SCR-07' && (
-            <Screen07AuditLogs onNavigate={setCurrentScreen} showToast={showToast} />
+            <Screen07AuditLogs onNavigate={handleSelectScreen} showToast={showToast} />
           )}
         </main>
       </div>
@@ -95,14 +156,14 @@ export default function App() {
               (id) => (
                 <button
                   key={id}
-                  onClick={() => setCurrentScreen(id)}
+                  onClick={() => handleSelectScreen(id)}
                   className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all ${
                     currentScreen === id
                       ? 'bg-[#dda15e] text-[#1d1c0d] font-bold retro-shadow-sm scale-105'
                       : 'text-[#fefae0]/80 hover:bg-[#1b2413] hover:text-white'
                   }`}
                 >
-                  {id}
+                  {id === 'SCR-01' ? 'SALIR' : id}
                 </button>
               )
             )}
@@ -131,8 +192,8 @@ export default function App() {
         isOpen={isPromptModalOpen}
         onClose={() => setIsPromptModalOpen(false)}
         initialScreenCode={selectedPromptCode}
-        onNavigateToScreen={setCurrentScreen}
-        onNavigate={setCurrentScreen}
+        onNavigateToScreen={handleSelectScreen}
+        onNavigate={handleSelectScreen}
       />
     </div>
   );
