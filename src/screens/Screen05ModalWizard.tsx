@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ScreenId, UIState } from '../types';
+import { createOrder, NewOrder } from '../lib/api';
 import { StateControlBar } from '../components/StateControlBar';
 import { 
   X, 
@@ -90,12 +91,34 @@ export const Screen05ModalWizard: React.FC<Screen05ModalWizardProps> = ({
     showToast('Borrador Guardado: Transacción persistida en HttpSession (Payara 7)');
   };
 
-  const handleConfirmOrder = () => {
+  const handleConfirmOrder = async () => {
     if (cart.length === 0) {
       showToast('Agregue al menos un producto al pedido.');
       return;
     }
-    showToast('¡Orden FACT-2026-9041 confirmada con éxito en Payara 7!');
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('es-CO', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+    const order: NewOrder = {
+      code: `#ORD-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+      customerName: 'Distribuidora Dulces del Fonce S.A.S.',
+      customerLocation: 'San Gil, Santander',
+      productName: cart.map((i) => i.name).join(' + '),
+      quantity: totalBoxes,
+      totalCOP: totalNeto,
+      status: 'En Proceso',
+      date: dateStr,
+    };
+    try {
+      await createOrder(order);
+      showToast(`¡Orden ${order.code} confirmada y persistida en Supabase!`);
+    } catch (err) {
+      console.warn('[SCR-05] No se pudo guardar la orden en Supabase:', err);
+      showToast('¡Orden FACT-2026-9041 confirmada (modo local: Supabase no disponible)!');
+    }
     setTimeout(() => {
       onNavigate('SCR-04');
     }, 600);

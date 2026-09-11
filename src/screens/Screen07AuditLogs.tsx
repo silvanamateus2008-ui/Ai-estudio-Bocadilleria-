@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScreenId, UIState, AuditLogItem } from '../types';
-import { AUDIT_LOGS_DATA, IMAGES } from '../data/domainData';
+import { IMAGES } from '../data/domainData';
+import { fetchAuditLogs } from '../lib/api';
 import { StateControlBar } from '../components/StateControlBar';
 import { 
   ShieldCheck, 
@@ -29,14 +30,33 @@ export const Screen07AuditLogs: React.FC<Screen07AuditLogsProps> = ({
   onNavigate,
   showToast,
 }) => {
-  const [uiState, setUiState] = useState<UIState>('normal');
+  const [uiState, setUiState] = useState<UIState>('loading');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStation, setSelectedStation] = useState('Todas');
   const [selectedLevel, setSelectedLevel] = useState('Todos');
+  const [logsList, setLogsList] = useState<AuditLogItem[]>([]);
   const [traceLotInput, setTraceLotInput] = useState('#TAN-883');
   const [traceResult, setTraceResult] = useState(true);
 
-  const filteredLogs = AUDIT_LOGS_DATA.filter((log) => {
+  useEffect(() => {
+    let mounted = true;
+    fetchAuditLogs()
+      .then((data) => {
+        if (!mounted) return;
+        setLogsList(data);
+        setUiState(data.length > 0 ? 'normal' : 'empty');
+      })
+      .catch((err) => {
+        if (!mounted) return;
+        console.warn('[SCR-07] Error cargando auditoría:', err);
+        setUiState('error');
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const filteredLogs = logsList.filter((log) => {
     const matchesStation = selectedStation === 'Todas' || log.station.includes(selectedStation);
     const matchesLevel = selectedLevel === 'Todos' || log.level === selectedLevel;
     const matchesSearch =
@@ -359,7 +379,7 @@ export const Screen07AuditLogs: React.FC<Screen07AuditLogsProps> = ({
         </div>
 
         {/* Empty State */}
-        {uiState === 'empty' || filteredLogs.length === 0 ? (
+        {uiState === 'empty' || (filteredLogs.length === 0 && uiState !== 'loading') ? (
           <div className="p-8 text-center bg-[#fefae0]">
             <Terminal className="w-12 h-12 mx-auto text-[#bc6c25] mb-2" />
             <h4 className="font-serif text-base font-bold text-[#1d1c0d]">

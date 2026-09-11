@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScreenId, UIState, OrderItem } from '../types';
-import { ORDERS_DATA, IMAGES } from '../data/domainData';
+import { IMAGES } from '../data/domainData';
+import { fetchOrders } from '../lib/api';
 import { StateControlBar } from '../components/StateControlBar';
 import { 
   TrendingUp, 
@@ -26,13 +27,32 @@ interface Screen02DashboardProps {
 }
 
 export const Screen02Dashboard: React.FC<Screen02DashboardProps> = ({ onNavigate, showToast }) => {
-  const [uiState, setUiState] = useState<UIState>('normal');
+  const [uiState, setUiState] = useState<UIState>('loading');
+  const [ordersList, setOrdersList] = useState<OrderItem[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('Todos');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeChartTab, setActiveChartTab] = useState<'resumen' | 'pedidos'>('resumen');
   const [timeFilter, setTimeFilter] = useState('6M');
 
-  const filteredOrders = ORDERS_DATA.filter((order) => {
+  useEffect(() => {
+    let mounted = true;
+    fetchOrders()
+      .then((data) => {
+        if (!mounted) return;
+        setOrdersList(data);
+        setUiState(data.length > 0 ? 'normal' : 'empty');
+      })
+      .catch((err) => {
+        if (!mounted) return;
+        console.warn('[SCR-02] Error cargando pedidos:', err);
+        setUiState('error');
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const filteredOrders = ordersList.filter((order) => {
     const matchesStatus = statusFilter === 'Todos' || order.status === statusFilter;
     const matchesSearch =
       order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -439,7 +459,7 @@ export const Screen02Dashboard: React.FC<Screen02DashboardProps> = ({ onNavigate
         </div>
 
         {/* Empty State in Table */}
-        {uiState === 'empty' || filteredOrders.length === 0 ? (
+        {uiState === 'empty' || (filteredOrders.length === 0 && uiState !== 'loading') ? (
           <div className="p-8 text-center bg-[#fefae0]">
             <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-[#f4f1de] border-2 border-[#bc6c25] flex items-center justify-center text-[#8f4a00]">
               <Package className="w-8 h-8" />
@@ -531,7 +551,7 @@ export const Screen02Dashboard: React.FC<Screen02DashboardProps> = ({ onNavigate
         {/* Table Footer */}
         <div className="p-3 bg-[#f4f1de] border-t border-[#bc6c25] flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-[#544438]">
           <span>
-            Mostrando <strong>{filteredOrders.length}</strong> de {ORDERS_DATA.length} remisiones registradas
+            Mostrando <strong>{filteredOrders.length}</strong> de {ordersList.length} remisiones registradas
           </span>
           <div className="flex items-center gap-2">
             <button

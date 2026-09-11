@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScreenId, UIState, ProductItem } from '../types';
-import { PRODUCTS_DATA, IMAGES } from '../data/domainData';
+import { IMAGES } from '../data/domainData';
+import { fetchProducts } from '../lib/api';
 import { StateControlBar } from '../components/StateControlBar';
 import { 
   Package, 
@@ -25,11 +26,29 @@ interface Screen03CatalogProps {
 }
 
 export const Screen03Catalog: React.FC<Screen03CatalogProps> = ({ onNavigate, showToast }) => {
-  const [uiState, setUiState] = useState<UIState>('normal');
+  const [uiState, setUiState] = useState<UIState>('loading');
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('Todas');
-  const [productsList, setProductsList] = useState<ProductItem[]>(PRODUCTS_DATA);
+  const [productsList, setProductsList] = useState<ProductItem[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    fetchProducts()
+      .then((data) => {
+        if (!mounted) return;
+        setProductsList(data);
+        setUiState(data.length > 0 ? 'normal' : 'empty');
+      })
+      .catch((err) => {
+        if (!mounted) return;
+        console.warn('[SCR-03] Error cargando productos:', err);
+        setUiState('error');
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const filteredProducts = productsList.filter((prod) => {
     const matchesCategory = categoryFilter === 'Todas' || prod.category === categoryFilter;
@@ -186,7 +205,7 @@ export const Screen03Catalog: React.FC<Screen03CatalogProps> = ({ onNavigate, sh
       {viewMode === 'table' ? (
         /* TABLE VIEW */
         <div className="bg-[#fefae0] border-[3px] border-[#bc6c25] rounded retro-shadow overflow-hidden">
-          {uiState === 'empty' || filteredProducts.length === 0 ? (
+          {uiState === 'empty' || (filteredProducts.length === 0 && uiState !== 'loading') ? (
             <div className="p-8 text-center bg-[#fefae0]">
               <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-[#f4f1de] border-2 border-[#bc6c25] flex items-center justify-center text-[#8f4a00]">
                 <Package className="w-8 h-8" />
